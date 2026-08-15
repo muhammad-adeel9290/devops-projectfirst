@@ -54,11 +54,11 @@ fi
 # ---------- 3. CPU Monitoring ----------
 # uptime shows "load average: 1min, 5min, 15min"
 # We use the 1-minute load and compare against number of CPU cores.
-CPU_LOAD=$(uptime | awk -F'load average:' '{print $2}' | awk -F, '{print $1}' | tr -d ' ')
+CPU_LOAD=$(awk '{print $1}' /proc/loadavg)
 CPU_CORES=$(nproc)
 
 # awk handles the float comparison since bash can't compare decimals directly
-CPU_HIGH=$(awk -v load="$CPU_LOAD" -v cores="$CPU_CORES" 'BEGIN { print (load >= cores) ? "1" : "0" }')
+CPU_HIGH=$(awk -v load_avg="$CPU_LOAD" -v cores="$CPU_CORES" 'BEGIN { print (load_avg >= cores) ? 1 : 0 }')
 
 if [ "$CPU_HIGH" -eq 1 ]; then
     CPU_STATUS="WARNING"
