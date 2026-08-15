@@ -69,7 +69,10 @@ fi
 
 # ---------- 4. SSH Service Monitoring ----------
 # Different distros name it "ssh" or "sshd" - check both
-if systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+if [ "${CI:-false}" = "true" ]; then
+    SSH_STATUS="SKIPPED (CI)"
+    SSH_STATE="SKIPPED"
+elif systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
     SSH_STATUS="OK"
     SSH_STATE="RUNNING"
 else
