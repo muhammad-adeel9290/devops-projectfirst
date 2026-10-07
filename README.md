@@ -131,18 +131,11 @@ The helper reads its optional shell environment configuration from `/etc/devops-
 
 ```bash
 sudo install -d -o root -g root -m 0700 /etc/devops-projectfirst
-sudo install -o root -g root -m 0600 /dev/null /etc/devops-projectfirst/alerting.env
+sudo install -o root -g root -m 0600 .env.example /etc/devops-projectfirst/alerting.env
 sudoedit /etc/devops-projectfirst/alerting.env
 ```
 
-Set one or both notification destinations in that file:
-
-```bash
-SLACK_WEBHOOK_URL='https://hooks.slack.com/services/REPLACE/THIS/SECRET'
-ALERT_EMAIL_TO='oncall@example.com'
-# Optional sender address; the local mail transfer agent must permit it.
-ALERT_EMAIL_FROM='monitoring@example.com'
-```
+The sample contains placeholders; replace them with your actual destination(s), and remove any unused setting.
 
 For Slack, install `curl` and `jq`, and create an incoming webhook restricted to the intended workspace/channel. Treat its URL as a credential: do not commit it or expose it in logs or process arguments. The alert script passes the URL to `curl` through stdin rather than a command-line argument. For email, install `mail` or `mailx` and configure a local mail transfer agent; this project does not manage SMTP credentials or the mail server. Use your organization's approved mail relay and validate delivery before relying on alerts.
 
@@ -151,8 +144,8 @@ After configuring the file, install or re-run the cron setup. Every five-minute 
 To test manually, run a health check and then evaluate its result:
 
 ```bash
-./server_health_check.sh || true
-./alert_on_failure.sh
+sudo ./server_health_check.sh || true
+sudo ./alert_on_failure.sh
 ```
 
 This sends a notification only when the current health state differs from the saved state. Do not use production webhook URLs or email recipients for tests unless you intend to send a real notification.
