@@ -9,7 +9,7 @@ if [ "${1:-}" = "--dry-run" ]; then
     cat <<EOF
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-*/5 * * * * root /bin/bash $SCRIPT_DIR/server_health_check.sh >> $LOG_DIR/cron_health.log 2>&1
+*/5 * * * * root ( /bin/bash "$SCRIPT_DIR/server_health_check.sh"; /bin/bash "$SCRIPT_DIR/alert_on_failure.sh" ) >> "$LOG_DIR/cron_health.log" 2>&1
 EOF
     exit 0
 fi
@@ -25,7 +25,7 @@ chmod 755 "$LOG_DIR"
 cat > /tmp/devops-projectfirst-healthcheck.cron <<EOF
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-*/5 * * * * root /bin/bash $SCRIPT_DIR/server_health_check.sh >> $LOG_DIR/cron_health.log 2>&1
+*/5 * * * * root ( /bin/bash "$SCRIPT_DIR/server_health_check.sh"; /bin/bash "$SCRIPT_DIR/alert_on_failure.sh" ) >> "$LOG_DIR/cron_health.log" 2>&1
 EOF
 
 install -m 0644 /tmp/devops-projectfirst-healthcheck.cron "$CRON_FILE"
