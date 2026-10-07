@@ -1,7 +1,7 @@
 #!/bin/bash
 ###############################################################################
 # Script Name : server_health_check.sh
-# Description : Automatically checks Disk, Memory, CPU load and SSH service
+# Description : Automatically checks disk, memory, CPU load, and SSH service
 #               health on a Linux server. Prints OK/WARNING for each metric,
 #               shows an overall status, and logs every run.
 # Author      : Muhammad Adeel
@@ -13,7 +13,7 @@ DISK_THRESHOLD=80          # percent
 MEMORY_THRESHOLD=80        # percent
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../logs"
+LOG_DIR="$SCRIPT_DIR/logs"
 LOG_FILE="$LOG_DIR/health_check.log"
 
 mkdir -p "$LOG_DIR"
@@ -27,11 +27,10 @@ report() {
 OVERALL_STATUS=0
 
 # ---------- 1. Disk Usage Monitoring ----------
-# df -h / -> root partition usage
-# awk grabs the "Use%" column (5th column), tr removes the % sign
-DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | tr -d '%')
+# Use the last numeric usage field, which remains stable even when the filesystem path contains spaces.
+DISK_USAGE=$(df -P / 2>/dev/null | awk 'NR==2 {gsub(/%/, "", $(NF-1)); print $(NF-1)}')
 
-if [ "$DISK_USAGE" -ge "$DISK_THRESHOLD" ]; then
+if [ -n "$DISK_USAGE" ] && [ "$DISK_USAGE" -ge "$DISK_THRESHOLD" ]; then
     DISK_STATUS="WARNING"
     OVERALL_STATUS=1
 else
@@ -39,10 +38,25 @@ else
 fi
 
 # ---------- 2. Memory Monitoring ----------
-# free -m -> memory in MB, "Mem:" row has total (col 2) and used (col 3)
-MEM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
-MEM_USED=$(free -m | awk '/Mem:/ {print $3}')
-MEM_USAGE=$(( MEM_USED * 100 / MEM_TOTAL ))
+# Prefer /proc/meminfo because `free` is not always installed on minimal Linux/Git Bash systems.
+if [ -f /proc/meminfo ]; then
+    MEM_TOTAL_KB=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+
+    if awk '/MemAvailable/ { exit 0 } END { exit 1 }' /proc/meminfo >/dev/null 2>&1; then
+        MEM_AVAILABLE_KB=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+    else
+        MEM_AVAILABLE_KB=$(awk '/MemFree/ {print $2}' /proc/meminfo)
+    fi
+
+    if [ -n "$MEM_TOTAL_KB" ] && [ "$MEM_TOTAL_KB" -gt 0 ]; then
+        MEM_USED_KB=$(( MEM_TOTAL_KB - MEM_AVAILABLE_KB ))
+        MEM_USAGE=$(( MEM_USED_KB * 100 / MEM_TOTAL_KB ))
+    else
+        MEM_USAGE=0
+    fi
+else
+    MEM_USAGE=0
+fi
 
 if [ "$MEM_USAGE" -ge "$MEMORY_THRESHOLD" ]; then
     MEM_STATUS="WARNING"
@@ -53,12 +67,17 @@ fi
 
 # ---------- 3. CPU Monitoring ----------
 # uptime shows "load average: 1min, 5min, 15min"
-# We use the 1-minute load and compare against number of CPU cores.
-CPU_LOAD=$(awk '{print $1}' /proc/loadavg)
-CPU_CORES=$(nproc)
+# We use the 1-minute load and compare against the number of CPU cores.
+CPU_LOAD=$(awk '{print $1}' /proc/loadavg 2>/dev/null)
+CPU_CORES=$(nproc 2>/dev/null)
 
-# awk handles the float comparison since bash can't compare decimals directly
-CPU_HIGH=$(awk -v load_avg="$CPU_LOAD" -v cores="$CPU_CORES" 'BEGIN { print (load_avg >= cores) ? 1 : 0 }')
+if [ -n "$CPU_LOAD" ] && [ -n "$CPU_CORES" ] && [ "$CPU_CORES" -gt 0 ]; then
+    CPU_HIGH=$(awk -v load_avg="$CPU_LOAD" -v cores="$CPU_CORES" 'BEGIN { print (load_avg >= cores) ? 1 : 0 }')
+else
+    CPU_HIGH=0
+    CPU_LOAD="N/A"
+    CPU_CORES="N/A"
+fi
 
 if [ "$CPU_HIGH" -eq 1 ]; then
     CPU_STATUS="WARNING"
@@ -68,11 +87,20 @@ else
 fi
 
 # ---------- 4. SSH Service Monitoring ----------
-# Different distros name it "ssh" or "sshd" - check both
+# Different distros name it "ssh" or "sshd" - check both.
 if [ "${CI:-false}" = "true" ]; then
     SSH_STATUS="SKIPPED (CI)"
     SSH_STATE="SKIPPED"
-elif systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+elif command -v systemctl >/dev/null 2>&1 && (systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null); then
+    SSH_STATUS="OK"
+    SSH_STATE="RUNNING"
+elif command -v service >/dev/null 2>&1 && (service ssh status >/dev/null 2>&1 || service sshd status >/dev/null 2>&1); then
+    SSH_STATUS="OK"
+    SSH_STATE="RUNNING"
+elif [ -f /etc/init.d/ssh ] && /etc/init.d/ssh status >/dev/null 2>&1; then
+    SSH_STATUS="OK"
+    SSH_STATE="RUNNING"
+elif [ -f /etc/init.d/sshd ] && /etc/init.d/sshd status >/dev/null 2>&1; then
     SSH_STATUS="OK"
     SSH_STATE="RUNNING"
 else
@@ -92,7 +120,7 @@ report "================================"
 report "SERVER HEALTH CHECK - $(date '+%Y-%m-%d %H:%M:%S')"
 report "================================"
 report ""
-report "Disk Usage: ${DISK_USAGE}%     [${DISK_STATUS}]"
+report "Disk Usage: ${DISK_USAGE:-0}%     [${DISK_STATUS}]"
 report "Memory Usage: ${MEM_USAGE}%   [${MEM_STATUS}]"
 report "CPU Load: ${CPU_LOAD} (Cores: ${CPU_CORES})   [${CPU_STATUS}]"
 report "SSH Service:         [${SSH_STATE}]"
