@@ -1,0 +1,26 @@
+{
+  "name": "devops-server-monitor",
+  "version": "2.0.0",
+  "description": "Enterprise Server Health Monitoring, Prometheus Exporter & DevOps Automation Platform",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "devops",
+    "monitoring",
+    "prometheus",
+    "grafana",
+    "kubernetes",
+    "docker",
+    "sre"
+  ],
+  "author": "Muhammad Adeel",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "prom-client": "^15.1.3"
+  }
+}
