@@ -1,9 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs & Temp files
 *.log
 *.tmp
+logs/
+
+# Environment Variables & Secrets
 .env
 .env.*
 !.env.example
-__pycache__/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# IDE & OS
 .vscode/
 .idea/
-logs/
+.DS_Store
+Thumbs.db

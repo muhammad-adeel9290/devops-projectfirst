@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "devops-server-monitor.fullname" . }}-config
+  labels:
+    {{- include "devops-server-monitor.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.env.NODE_ENV | quote }}
+  PORT: {{ .Values.env.PORT | quote }}
+  CPU_THRESHOLD: {{ .Values.env.CPU_THRESHOLD | quote }}
+  MEMORY_THRESHOLD: {{ .Values.env.MEMORY_THRESHOLD | quote }}
+  DISK_THRESHOLD: {{ .Values.env.DISK_THRESHOLD | quote }}
+

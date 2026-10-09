@@ -1,217 +1,264 @@
-# DevOps Project 1
+# ⚡ Enterprise DevOps Server Health & Observability Platform
 
 <div align="center">
-  <img src="https://img.shields.io/badge/DevOps-Server%20Monitoring-blue" alt="DevOps" />
-  <img src="https://img.shields.io/badge/Linux-Automation-green" alt="Linux" />
-  <img src="https://img.shields.io/badge/Docker-Containerized-orange" alt="Docker" />
-  <img src="https://img.shields.io/badge/GitHub-Actions-black" alt="GitHub Actions" />
+
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Multi--stage_Hardened-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Production_Ready-326CE5?logo=kubernetes&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm_v3-Charts-0F1689?logo=helm&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/GitOps-ArgoCD-EF7B4D?logo=argo&logoColor=white)
+![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Monitoring-Prometheus-E6522C?logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Visuals-Grafana-F46800?logo=grafana&logoColor=white)
+![Security](https://img.shields.io/badge/DevSecOps-Trivy_%26_Gitleaks-red)
+
+**A complete, production-grade DevOps engineering platform featuring Real-Time Server Health Monitoring, Prometheus Metrics Exporter, Multi-stage Dockerization, Zero-Trust Kubernetes Helm Deployments, GitOps with ArgoCD, AWS Cloud Infrastructure via Terraform, and Automated DevSecOps CI/CD Pipelines.**
+
 </div>
 
-A practical DevOps project focused on Linux server health monitoring, automation, and Docker-based deployment workflows.
+---
 
-## Overview
+## 📌 Architecture Overview
 
-This project demonstrates a real-world DevOps workflow by combining system monitoring, automation, and CI/CD. It includes a Bash-based health check script that monitors key Linux server metrics such as:
+```mermaid
+flowchart TD
+    subgraph Cloud Infrastructure ["Cloud Infrastructure (Terraform)"]
+        VPC[AWS VPC / Subnets] --> EKS[AWS EKS Cluster]
+    end
 
-- Disk usage
-- Memory consumption
-- CPU load
-- SSH service status
+    subgraph CI/CD & DevSecOps ["DevSecOps CI/CD (GitHub Actions)"]
+        GitPush([Developer Push]) --> Lint[Linting & Unit Tests]
+        Lint --> Security[Trivy & Gitleaks Scans]
+        Security --> Build[Docker Buildx Multi-Arch]
+        Build --> Registry[(Docker Hub / GHCR)]
+    end
 
-The repository also includes:
+    subgraph GitOps ["GitOps Continuous Delivery (ArgoCD)"]
+        Registry -.-> ArgoCD[ArgoCD Controller]
+        GitRepo[Git Manifests / Helm] --> ArgoCD
+        ArgoCD -->|Sync & Self-Heal| EKS
+    end
 
-- a cron-based scheduler for automatic monitoring
-- Slack and email notifications when health changes, including recovery alerts
-- a GitHub Actions workflow that runs the health check
-- Docker support for packaging and publishing the project image
+    subgraph Kubernetes Cluster ["Kubernetes Runtime (Helm)"]
+        Ingress[Ingress Controller] --> Svc[ClusterIP Service]
+        Svc --> Pod1[App Pod - Server Monitor]
+        Svc --> Pod2[App Pod - Server Monitor]
+        HPA[Horizontal Pod Autoscaler] -.-> Pod1
+        PDB[Pod Disruption Budget] -.-> Pod1
+        NetPol[Zero-Trust NetworkPolicy] -.-> Pod1
+    end
 
-## Why This Project?
+    subgraph Observability ["Observability Stack"]
+        Prometheus[Prometheus Server] -->|Scrapes /metrics| Pod1
+        Prometheus --> Alertmanager[Alertmanager]
+        Alertmanager --> Slack[Slack / Webhooks]
+        Grafana[Grafana Dashboards] -->|Queries| Prometheus
+    end
+```
 
-This project is designed to teach and demonstrate essential DevOps fundamentals:
+---
 
-- Infrastructure monitoring
-- Automated checks and alerts
-- Cron-based scheduling
-- GitHub Actions automation
-- Docker image creation and publishing
+## ✨ Key Enterprise Features
 
-## Features
+- **Real-Time Health Exporter & Dashboard**:
+  - Exposes standard Prometheus metrics (`system_cpu_usage_percent`, `system_memory_usage_percent`, `system_disk_usage_percent`, `system_health_status`, `http_requests_total`).
+  - Native Kubernetes liveness (`/healthz`) and readiness (`/readyz`) probes.
+  - Interactive dark-mode web dashboard with live auto-refresh at `http://localhost:3000/`.
+- **Security-Hardened Docker Containerization**:
+  - Multi-stage build targeting minimal Alpine base (`node:20-alpine`).
+  - Runs strictly as unprivileged non-root user (`node`).
+  - Integrated `dumb-init` for proper Linux signal forwarding and zombie process reaping.
+  - Built-in container healthcheck instruction.
+- **Full Local Observability Stack (`docker-compose.yml`)**:
+  - 1-command local environment with **App**, **Prometheus**, **Grafana** (pre-provisioned dashboards), and **Alertmanager**.
+- **Production Kubernetes Helm Chart (`helm/devops-monitor`)**:
+  - High Availability with **HorizontalPodAutoscaler (HPA)** and **PodDisruptionBudget (PDB)**.
+  - TLS-ready Ingress configuration.
+  - Prometheus Operator `ServiceMonitor` integration.
+  - Zero-Trust `NetworkPolicy` restricting unauthorized ingress/egress.
+  - Multi-environment values (`values-dev.yaml`, `values-prod.yaml`).
+- **GitOps Continuous Delivery**:
+  - Declarative **ArgoCD Application manifests** with automated sync, prune, and self-healing.
+  - **App-of-Apps** pattern for enterprise multi-cluster management.
+- **Infrastructure as Code with Terraform (`terraform/`)**:
+  - Modular AWS architecture (`modules/vpc`, `modules/eks`).
+  - Separate `dev` and `prod` environments.
+  - Remote state locking with AWS S3 + DynamoDB.
+- **DevSecOps Automated CI Pipeline (`.github/workflows/ci.yml`)**:
+  - ShellCheck validation on bash scripts.
+  - Automated unit testing.
+  - **Gitleaks** credential leak detection.
+  - **Trivy** vulnerability scanner for dependencies and container images.
+  - Multi-architecture Docker builds (`linux/amd64`, `linux/arm64`) using Docker Buildx and GitHub caching.
 
-- Monitors disk usage and memory health
-- Checks CPU load against available cores
-- Verifies whether SSH is active
-- Logs health reports for troubleshooting
-- Supports scheduled execution with cron
-- Integrates with GitHub Actions for CI/CD automation
-- Builds and pushes a Docker image to Docker Hub
+---
 
-## Tech Stack
-
-- Linux / Ubuntu
-- Bash scripting
-- Cron jobs
-- Git & GitHub
-- GitHub Actions
-- Docker
-
-## Project Structure
+## 📂 Project Structure
 
 ```text
-.
+devops-projectfirst/
 ├── .github/
 │   └── workflows/
-│       └── main.yml
-├── .gitignore
-├── Dockerfile
-├── README.md
-├── logs/
-├── alert_on_failure.sh
-├── server_health_check.sh
-├── setup_cron_monitoring.sh
-``` 
+│       └── ci.yml                 # DevSecOps CI: Tests, ShellCheck, Trivy, Gitleaks, Buildx
+├── src/
+│   ├── app.js                     # Core Express server & health probe routes
+│   ├── metrics.js                 # Prometheus registry & system metrics collector
+│   ├── systemInfo.js              # Real-time CPU, Memory, Disk & Process metrics
+│   └── public/
+│       └── index.html             # Real-time Glassmorphism Web Dashboard UI
+├── tests/
+│   └── app.test.js                # Automated unit test suite (Node test runner)
+├── docker-compose.yml             # Full local stack (App + Prometheus + Grafana + Alertmanager)
+├── Dockerfile                     # Multi-stage non-root hardened container
+├── .dockerignore                  # Clean build context
+├── helm/
+│   └── devops-monitor/            # Production Helm Chart
+│       ├── Chart.yaml
+│       ├── values.yaml            # Base values
+│       ├── values-dev.yaml        # Dev overrides
+│       ├── values-prod.yaml       # Prod overrides (HA, 3+ replicas)
+│       └── templates/             # Deployment, Service, HPA, PDB, Ingress, NetworkPolicy
+├── gitops/
+│   └── argocd/                    # Declarative ArgoCD GitOps manifests
+│       ├── application-dev.yaml
+│       ├── application-prod.yaml
+│       └── app-of-apps.yaml
+├── terraform/
+│   ├── modules/
+│   │   ├── vpc/                   # Public/Private subnets, NAT, IGW
+│   │   └── eks/                   # EKS Cluster, Managed Node Groups, IAM Roles
+│   └── environments/
+│       ├── dev/                   # Dev environment deployment
+│       └── prod/                  # Prod environment deployment
+├── monitoring/
+│   ├── prometheus/
+│   │   ├── prometheus.yml         # Scrape jobs
+│   │   └── alert.rules.yml        # High CPU/Mem/Disk alerting rules
+│   ├── alertmanager/
+│   │   └── alertmanager.yml       # Routing & Slack/Webhook notifications
+│   └── grafana/
+│       ├── provisioning/          # Automated datasource & dashboard provisioning
+│       └── dashboards/            # Pre-built Server Metrics Dashboard
+├── server_health_check.sh         # Linux bash health check script
+├── alert_on_failure.sh            # Bash alerting engine (Slack & Email)
+├── setup_cron_monitoring.sh       # Cron scheduler installer
+├── package.json
+└── README.md
+```
 
-## Prerequisites
+---
 
-Before using this project, make sure the following are available on your system:
+## 🚀 Quick Start Guide
 
-- Linux-based environment
-- Bash shell
-- Standard Linux utilities such as `df`, `awk`, `nproc`, and `systemctl`
-- Cron service (for scheduled jobs)
-- `curl` and `jq` for Slack notifications (optional)
-- `mail` or `mailx` and a configured local mail transfer agent for email notifications (optional)
-- Docker (optional for local image build testing)
+### 1. Run Locally with Node.js
+```bash
+# Install dependencies
+npm install
 
-## Local Setup and Usage
+# Run unit tests
+npm test
 
-### 1. Make the script executable
+# Start the application
+npm start
+```
+- Open Web Dashboard: [http://localhost:3000](http://localhost:3000)
+- View Prometheus Metrics: [http://localhost:3000/metrics](http://localhost:3000/metrics)
+- Check Health API: [http://localhost:3000/api/v1/health](http://localhost:3000/api/v1/health)
+
+---
+
+### 2. Run the Full Observability Stack with Docker Compose
+To run the server monitor alongside Prometheus, Grafana, and Alertmanager with a single command:
 
 ```bash
-chmod +x server_health_check.sh
+docker compose up -d
 ```
 
-### 2. Run the health check manually
+| Service | URL | Default Credentials | Description |
+| :--- | :--- | :--- | :--- |
+| **Server Health Dashboard** | [http://localhost:3000](http://localhost:3000) | None | Live system health UI |
+| **Prometheus** | [http://localhost:9090](http://localhost:9090) | None | Metrics browser & target status |
+| **Grafana** | [http://localhost:3001](http://localhost:3001) | `admin` / `admin` | Auto-provisioned visual dashboard |
+| **Alertmanager** | [http://localhost:9093](http://localhost:9093) | None | Alert trigger & routing engine |
+
+---
+
+## ☸️ Kubernetes Deployment via Helm
+
+### Deploy to Development
+```bash
+helm upgrade --install devops-monitor ./helm/devops-monitor \
+  -n dev --create-namespace \
+  -f ./helm/devops-monitor/values.yaml \
+  -f ./helm/devops-monitor/values-dev.yaml
+```
+
+### Deploy to Production
+```bash
+helm upgrade --install devops-monitor ./helm/devops-monitor \
+  -n prod --create-namespace \
+  -f ./helm/devops-monitor/values.yaml \
+  -f ./helm/devops-monitor/values-prod.yaml
+```
+
+---
+
+## 🐙 GitOps with ArgoCD
+
+Apply the declarative Application manifests to your ArgoCD cluster:
 
 ```bash
-./server_health_check.sh
+# Deploy dev environment via GitOps
+kubectl apply -f gitops/argocd/application-dev.yaml
+
+# Deploy prod environment via GitOps
+kubectl apply -f gitops/argocd/application-prod.yaml
+
+# Or apply the App-of-Apps master manifest
+kubectl apply -f gitops/argocd/app-of-apps.yaml
 ```
 
-### 3. View the generated log
+ArgoCD will automatically reconcile and maintain the desired state defined in this repository, rolling out updates whenever changes are pushed to `main`.
+
+---
+
+## 🏗️ Cloud Infrastructure with Terraform
+
+Provision AWS VPC and EKS infrastructure using the included modules:
 
 ```bash
-cat logs/health_check.log
+cd terraform/environments/dev
+
+# Initialize Terraform providers and backend
+terraform init
+
+# Validate configuration
+terraform validate
+
+# Plan and inspect infrastructure changes
+terraform plan
+
+# Apply infrastructure
+terraform apply
 ```
 
-## Automated Monitoring with Cron
+---
 
-A helper script is included to run the health check and alert evaluation every 5 minutes.
+## 🛡️ DevSecOps Pipeline Summary
 
-```bash
-chmod +x setup_cron_monitoring.sh
-sudo ./setup_cron_monitoring.sh
-```
+Whenever code is pushed or a Pull Request is opened:
+1. **Quality Gate**: Node.js unit tests and ShellCheck on bash automation scripts.
+2. **Security Gate**:
+   - **Gitleaks**: Audits repository commits to prevent secret/token exposure.
+   - **Trivy Filesystem**: Identifies known vulnerabilities (CVEs) in third-party packages.
+   - **Trivy Image**: Performs vulnerability analysis on the compiled container.
+3. **Build & Release Gate**:
+   - Docker Buildx produces multi-platform images (`linux/amd64`, `linux/arm64`).
+   - Images are tagged with Git commit SHA and `latest`, then pushed to Docker Hub / GHCR.
 
-This installs a root-owned cron job that runs the health check, evaluates alert state, and appends output to:
+---
 
-```bash
-logs/cron_health.log
-```
+## 📜 Authors & License
 
-To preview the cron entry without installing it:
-
-```bash
-./setup_cron_monitoring.sh --dry-run
-```
-
-## Email and Slack Alerting
-
-The alert helper sends notifications when the server changes from healthy to unhealthy and when it recovers. It records events in `logs/alert_history.log`; repeated failures in the same state do not generate an alert every five minutes. Configure either or both channels. With no destination configured, state changes are recorded locally only.
-
-The helper reads its optional shell environment configuration from `/etc/devops-projectfirst/alerting.env`. Keep this file outside the repository, root-owned, and readable only by root:
-
-```bash
-sudo install -d -o root -g root -m 0700 /etc/devops-projectfirst
-sudo install -o root -g root -m 0600 .env.example /etc/devops-projectfirst/alerting.env
-sudoedit /etc/devops-projectfirst/alerting.env
-```
-
-The sample contains placeholders; replace them with your actual destination(s), and remove any unused setting.
-
-For Slack, install `curl` and `jq`, and create an incoming webhook restricted to the intended workspace/channel. Treat its URL as a credential: do not commit it or expose it in logs or process arguments. The alert script passes the URL to `curl` through stdin rather than a command-line argument. For email, install `mail` or `mailx` and configure a local mail transfer agent; this project does not manage SMTP credentials or the mail server. Use your organization's approved mail relay and validate delivery before relying on alerts.
-
-After configuring the file, install or re-run the cron setup. Every five-minute run executes `server_health_check.sh` followed by `alert_on_failure.sh`. Notification delivery errors are reported to `logs/cron_health.log`, return a non-zero status, and do not advance the saved alert state, so a later run retries. Slack delivery retries transient curl failures up to three times. Keep `logs/` on persistent storage with access limited to trusted operators; it contains system health details and alert transition state.
-
-To test manually, run a health check and then evaluate its result:
-
-```bash
-sudo ./server_health_check.sh || true
-sudo ./alert_on_failure.sh
-```
-
-This sends a notification only when the current health state differs from the saved state. Do not use production webhook URLs or email recipients for tests unless you intend to send a real notification.
-
-## GitHub Actions Workflow
-
-The workflow in `.github/workflows/main.yml` performs the following actions:
-
-1. Checks out the project code
-2. Runs the health-check script
-3. Logs in to Docker Hub using GitHub secrets
-4. Builds the Docker image
-5. Pushes the image to Docker Hub
-
-The image tag used is:
-
-```text
-adeel74954/devops-projectfirst:latest
-```
-
-## Docker Image
-
-The Docker image is created from the repository's `Dockerfile` and is based on Ubuntu 24.04.
-
-## Example Output
-
-```text
-================================
-SERVER HEALTH CHECK - 2026-10-07 13:35:34
-================================
-
-Disk Usage: 96%     [WARNING]
-Memory Usage: 92%   [WARNING]
-CPU Load: 1.13 (Cores: 4)   [OK]
-SSH Service:         [NOT RUNNING]
-
-Overall Status: NEEDS ATTENTION
-================================
-```
-
-## How It Works
-
-The server health script checks each system metric and marks it as either `OK` or `WARNING`.
-
-- If everything is within thresholds, the overall status is `HEALTHY`
-- If one or more monitored metrics exceed the threshold, the script marks the server as `NEEDS ATTENTION`
-- The script exits with a non-zero status in warning scenarios, which is useful for automation and CI checks
-
-## Notes
-
-- This project is meant for learning and demonstration purposes; validate alert delivery, log retention, and host permissions before production use.
-- Logs are stored in the `logs/` folder to help trace performance issues over time.
-
-## Future Improvements
-
-Planned enhancements for this project include:
-
-- systemd service support for Linux servers
-- Dynamic thresholds based on environment type
-- Prometheus/Grafana integration
-- More advanced deployment automation
-
-## License
-
-This project is for educational and learning purposes.
-
-## Author
-
-Muhammad Adeel
+- **Author**: Muhammad Adeel
+- **License**: MIT

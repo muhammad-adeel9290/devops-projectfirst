@@ -1,0 +1,20 @@
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 20m
+    memory: 32Mi
+
+autoscaling:
+  enabled: false
+
+ingress:
+  hosts:
+    - host: dev.monitor.local
+      paths:
+        - path: /
+          pathType: Prefix
+

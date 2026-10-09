@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Server Health & Metrics Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #1e293b, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo-group h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-group p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .card-metric {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 9999px;
+      transition: width 0.5s ease, background 0.3s ease;
+    }
+
+    .progress-fill.warning {
+      background: var(--warning);
+    }
+
+    .progress-fill.danger {
+      background: var(--danger);
+    }
+
+    .card-footer {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .info-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-item span:first-child {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-item span:last-child {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 0.2rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+      text-decoration: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-group">
+        <h1>⚡ DevOps Server Monitor</h1>
+        <p>Production Health Monitoring, Metrics & Alerting Platform</p>
+      </div>
+      <div>
+        <div id="overall-badge" class="status-badge">
+          <div class="status-pulse"></div>
+          <span id="overall-text">CHECKING HEALTH...</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- CPU Metric -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CPU Utilization</span>
+          <span id="cpu-status" style="font-size: 0.8rem; font-weight: 600; color: var(--success);">OK</span>
+        </div>
+        <div class="card-metric" id="cpu-percent">0%</div>
+        <div class="progress-bar">
+          <div id="cpu-progress" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="card-footer">
+          <span>Threshold: <span id="cpu-threshold">80</span>%</span>
+          <span>Load (1m): <span id="load-1m">0.00</span></span>
+        </div>
+      </div>
+
+      <!-- Memory Metric -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Memory Consumption</span>
+          <span id="mem-status" style="font-size: 0.8rem; font-weight: 600; color: var(--success);">OK</span>
+        </div>
+        <div class="card-metric" id="mem-percent">0%</div>
+        <div class="progress-bar">
+          <div id="mem-progress" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="card-footer">
+          <span>Used: <span id="mem-used">0</span> MB</span>
+          <span>Total: <span id="mem-total">0</span> MB</span>
+        </div>
+      </div>
+
+      <!-- Disk Metric -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Disk Storage</span>
+          <span id="disk-status" style="font-size: 0.8rem; font-weight: 600; color: var(--success);">OK</span>
+        </div>
+        <div class="card-metric" id="disk-percent">0%</div>
+        <div class="progress-bar">
+          <div id="disk-progress" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <div class="card-footer">
+          <span>Threshold: <span id="disk-threshold">85</span>%</span>
+          <span>Status: <span id="disk-status-text">Healthy</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Info & Endpoints -->
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Host & Environment</span>
+        </div>
+        <div class="info-list">
+          <div class="info-item">
+            <span>Hostname</span>
+            <span id="info-hostname">-</span>
+          </div>
+          <div class="info-item">
+            <span>Platform</span>
+            <span id="info-platform">-</span>
+          </div>
+          <div class="info-item">
+            <span>CPU Cores</span>
+            <span id="info-cores">-</span>
+          </div>
+          <div class="info-item">
+            <span>System Uptime</span>
+            <span id="info-uptime">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">DevOps Observability Links</span>
+        </div>
+        <div class="actions">
+          <a class="btn" href="/metrics" target="_blank">📊 Prometheus /metrics</a>
+          <a class="btn" href="/api/v1/health" target="_blank">🩺 Health JSON API</a>
+          <a class="btn" href="/healthz" target="_blank">✅ Liveness Probe</a>
+          <a class="btn" href="/readyz" target="_blank">🚀 Readiness Probe</a>
+        </div>
+        <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+          Scrape target configured for Prometheus, Grafana, Alertmanager & Kubernetes.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Updated live every 3s • DevOps Enterprise Project • Muhammad Adeel
+    </footer>
+  </div>
+
+  <script>
+    function formatUptime(seconds) {
+      const d = Math.floor(seconds / (3600*24));
+      const h = Math.floor(seconds % (3600*24) / 3600);
+      const m = Math.floor(seconds % 3600 / 60);
+      return `${d}d ${h}h ${m}m`;
+    }
+
+    async function fetchHealth() {
+      try {
+        const res = await fetch('/api/v1/health');
+        const data = await res.json();
+
+        // Overall status badge
+        const overallBadge = document.getElementById('overall-badge');
+        const overallText = document.getElementById('overall-text');
+        if (data.status === 'HEALTHY') {
+          overallBadge.className = 'status-badge';
+          overallText.textContent = 'SYSTEM HEALTHY';
+        } else {
+          overallBadge.className = 'status-badge warning';
+          overallText.textContent = 'NEEDS ATTENTION';
+        }
+
+        // CPU
+        const cpu = data.metrics.cpu;
+        document.getElementById('cpu-percent').textContent = `${cpu.usagePercent}%`;
+        const cpuBar = document.getElementById('cpu-progress');
+        cpuBar.style.width = `${cpu.usagePercent}%`;
+        cpuBar.className = 'progress-fill' + (cpu.usagePercent >= cpu.threshold ? ' danger' : (cpu.usagePercent >= 70 ? ' warning' : ''));
+        document.getElementById('cpu-status').textContent = cpu.status;
+        document.getElementById('cpu-status').style.color = cpu.status === 'OK' ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('cpu-threshold').textContent = cpu.threshold;
+        document.getElementById('load-1m').textContent = cpu.loadAverage.oneMin;
+
+        // Memory
+        const mem = data.metrics.memory;
+        document.getElementById('mem-percent').textContent = `${mem.usagePercent}%`;
+        const memBar = document.getElementById('mem-progress');
+        memBar.style.width = `${mem.usagePercent}%`;
+        memBar.className = 'progress-fill' + (mem.usagePercent >= mem.threshold ? ' danger' : (mem.usagePercent >= 70 ? ' warning' : ''));
+        document.getElementById('mem-status').textContent = mem.status;
+        document.getElementById('mem-status').style.color = mem.status === 'OK' ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('mem-used').textContent = mem.usedMB;
+        document.getElementById('mem-total').textContent = mem.totalMB;
+
+        // Disk
+        const disk = data.metrics.disk;
+        document.getElementById('disk-percent').textContent = `${disk.usagePercent}%`;
+        const diskBar = document.getElementById('disk-progress');
+        diskBar.style.width = `${disk.usagePercent}%`;
+        diskBar.className = 'progress-fill' + (disk.usagePercent >= disk.threshold ? ' danger' : (disk.usagePercent >= 70 ? ' warning' : ''));
+        document.getElementById('disk-status').textContent = disk.status;
+        document.getElementById('disk-status').style.color = disk.status === 'OK' ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('disk-threshold').textContent = disk.threshold;
+        document.getElementById('disk-status-text').textContent = disk.status === 'OK' ? 'Healthy' : 'High Usage';
+
+        // Host info
+        document.getElementById('info-hostname').textContent = data.host.hostname;
+        document.getElementById('info-platform').textContent = `${data.host.platform} (${data.host.arch})`;
+        document.getElementById('info-cores').textContent = data.host.cores;
+        document.getElementById('info-uptime').textContent = formatUptime(data.host.uptimeSeconds);
+      } catch (err) {
+        console.error('Error fetching health status:', err);
+      }
+    }
+
+    fetchHealth();
+    setInterval(fetchHealth, 3000);
+  </script>
+</body>
+</html>
+

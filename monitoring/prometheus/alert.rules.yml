@@ -1,0 +1,48 @@
+groups:
+  - name: ServerHealthAlerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job="devops-server-monitor"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "DevOps Server Monitor instance is down"
+          description: "Instance {{ $labels.instance }} of job {{ $labels.job }} has been down for more than 15 seconds."
+
+      - alert: HighCpuUsage
+        expr: system_cpu_usage_percent > 80
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected ({{ $value }}%)"
+          description: "Server CPU utilization is above 80% on instance {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: system_memory_usage_percent > 85
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Memory usage detected ({{ $value }}%)"
+          description: "Server Memory utilization exceeds 85% on instance {{ $labels.instance }}."
+
+      - alert: HighDiskUsage
+        expr: system_disk_usage_percent > 85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space critically low ({{ $value }}%)"
+          description: "Disk usage has crossed 85% on instance {{ $labels.instance }}."
+
+      - alert: SystemHealthDegraded
+        expr: system_health_status == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Overall server health degraded"
+          description: "One or more system thresholds have been breached."
+

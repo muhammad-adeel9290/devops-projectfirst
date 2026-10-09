@@ -1,0 +1,15 @@
+apiVersion: v2
+name: devops-server-monitor
+description: Production-grade Helm chart for DevOps Server Monitor and Prometheus Exporter
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+maintainers:
+  - name: Muhammad Adeel
+    email: adeel74954@users.noreply.github.com
+keywords:
+  - monitoring
+  - devops
+  - prometheus
+  - kubernetes
+
