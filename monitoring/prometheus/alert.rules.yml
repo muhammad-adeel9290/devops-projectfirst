@@ -45,3 +45,4 @@ groups:
         annotations:
           summary: "Overall server health degraded"
           description: "One or more system thresholds have been breached."
+

@@ -40,3 +40,4 @@ test('Disk Metrics: reports valid disk usage percentage', () => {
   assert.ok(disk.threshold > 0);
   assert.ok(['OK', 'WARNING'].includes(disk.status));
 });
+

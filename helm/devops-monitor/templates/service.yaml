@@ -13,3 +13,4 @@ spec:
       name: http
   selector:
     {{- include "devops-server-monitor.selectorLabels" . | nindent 4 }}
+

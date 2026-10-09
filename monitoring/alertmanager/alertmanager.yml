@@ -18,3 +18,4 @@ receivers:
     #   - api_url: 'https://hooks.slack.com/services/T00/B00/XXXX'
     #     channel: '#devops-alerts'
     #     text: "Alert: {{ .CommonAnnotations.summary }}\n{{ .CommonAnnotations.description }}"
+

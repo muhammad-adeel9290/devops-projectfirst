@@ -34,3 +34,4 @@ variable "tags" {
   description = "Common tags"
   default     = {}
 }
+

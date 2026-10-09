@@ -10,3 +10,4 @@ data:
   CPU_THRESHOLD: {{ .Values.env.CPU_THRESHOLD | quote }}
   MEMORY_THRESHOLD: {{ .Values.env.MEMORY_THRESHOLD | quote }}
   DISK_THRESHOLD: {{ .Values.env.DISK_THRESHOLD | quote }}
+

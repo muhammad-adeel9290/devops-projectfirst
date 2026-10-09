@@ -11,3 +11,4 @@ spec:
     matchLabels:
       {{- include "devops-server-monitor.selectorLabels" . | nindent 6 }}
 {{- end }}
+
